@@ -6,6 +6,7 @@ public class MapCreatorLoader : MonoBehaviour
 
     [SerializeField] CameraController cameraPrefab;
     [SerializeField] GameObject baseMapObjectPrefab;
+    [SerializeField] ControllerGUI guiControllerPrefab;
 
     private const float sizeX = 10000;
     private const float sizeY = sizeX;
@@ -15,7 +16,9 @@ public class MapCreatorLoader : MonoBehaviour
     private GameObject baseMapObject;
     private GameObject ground;
     private Plane groundPlane;
+    private ControllerGUI guiController;
 
+    public CameraController CameraInstance { get { return cameraInstance; } }
     public GameObject BaseMapObject { get { return baseMapObject; } }
     public GameObject Ground { get { return ground; } }
     public Plane GroundPlane { get { return groundPlane; } }
@@ -27,6 +30,7 @@ public class MapCreatorLoader : MonoBehaviour
         MakeBaseMapObject();
         MakeGround();
         MakeCamera();
+        MakeGui();
     }
 
     private void MakeBaseMapObject()
@@ -47,5 +51,11 @@ public class MapCreatorLoader : MonoBehaviour
         ground.transform.Rotate(Vector3.right, 90f);
 
         groundPlane = new Plane(Vector3.up, Vector3.zero);
+    }
+
+    private void MakeGui()
+    {
+        guiController = Instantiate(guiControllerPrefab);
+        guiController.transform.SetParent(baseMapObject.transform, false);
     }
 }

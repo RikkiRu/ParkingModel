@@ -6,10 +6,13 @@ public class CameraController : MonoBehaviour
     [SerializeField] float rotationSpeed;
 
     private GameObject pointer;
+    public GameObject Poiner { get { return pointer; } }
 
     private void Awake()
     {
-        pointer = MeshUtil.MakeSolidMesh("Pointer", 1, 1, Color.red);
+        pointer = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        pointer.GetComponent<MeshRenderer>().material.color = Color.red;
+        pointer.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
         pointer.transform.Rotate(Vector3.right, 90f);
         pointer.transform.SetParent(MapCreatorLoader.Instance.BaseMapObject.transform);
     }
@@ -25,20 +28,13 @@ public class CameraController : MonoBehaviour
         transform.Translate(translationX, 0, translationZ);
         //transform.Rotate(0, translationY, 0);
 
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(1))
         {
             var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            //var point = ray.origin + (ray.direction * 5);
-            
-            //point.y = 0.1f;
-            //pointer.transform.position = point;
-
             float dist;
             MapCreatorLoader.Instance.GroundPlane.Raycast(ray, out dist);
             var point = ray.GetPoint(dist);
-
-            Debug.Log("World point " + point);
-            point.y = 0.1f;
+            point.y = 0f;
             pointer.transform.position = point;
         }
     }
