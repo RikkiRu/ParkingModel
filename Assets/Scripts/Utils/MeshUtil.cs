@@ -9,24 +9,28 @@ public class MeshUtil
         Mesh m = new Mesh();
         m.name = "ScriptedMesh";
 
+        float width2 = width / 2;
+        float height2 = height / 2;
+
         m.vertices = new Vector3[]
         {
-         new Vector3(-width, -height, 0.01f),
-         new Vector3(width, -height, 0.01f),
-         new Vector3(width, height, 0.01f),
-         new Vector3(-width, height, 0.01f)
+         new Vector3(-width2, -height2, 0f),
+         new Vector3(width2, -height2, 0f),
+         new Vector3(-width2, height2, 0f),
+         new Vector3(width2, height2, 0f),
         };
 
         m.uv = new Vector2[] 
         {
          new Vector2 (0, 0),
+         new Vector2 (1, 0),
          new Vector2 (0, 1),
-         new Vector2(1, 1),
-         new Vector2 (1, 0)
+         new Vector2 (1, 1),
         };
 
-        m.triangles = new int[] { 0, 1, 2, 0, 2, 3 };
+        m.triangles = new int[] { 0, 2, 1, 1, 2, 3 };
         m.RecalculateNormals();
+        m.Optimize();
 
         meshFilter.mesh = m;
     }
@@ -34,7 +38,6 @@ public class MeshUtil
     public static void ApplyMaterial(GameObject plane, Color color)
     {
         MeshRenderer renderer = plane.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
-        renderer.material.shader = Shader.Find("Sprites/Default");
         renderer.material.color = color;
     }
 
