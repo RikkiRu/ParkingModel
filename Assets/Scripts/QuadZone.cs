@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class QuadZone : MonoBehaviour
 {
@@ -30,7 +29,7 @@ public class QuadZone : MonoBehaviour
 
             sphere.transform.SetParent(transform, false);
             sphere.transform.localPosition = vertex[i];
-            sphere.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+            sphere.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
         }
 
         filter = gameObject.GetComponent<MeshFilter>();

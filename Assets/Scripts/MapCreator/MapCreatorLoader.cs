@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class MapCreatorLoader : MonoBehaviour
 {
@@ -17,11 +18,13 @@ public class MapCreatorLoader : MonoBehaviour
     private GameObject ground;
     private Plane groundPlane;
     private ControllerGUI guiController;
+    private ParkingZone parkingZone;
 
     public CameraController CameraInstance { get { return cameraInstance; } }
     public GameObject BaseMapObject { get { return baseMapObject; } }
     public GameObject Ground { get { return ground; } }
     public Plane GroundPlane { get { return groundPlane; } }
+    public ParkingZone ParkingZone { get { return parkingZone; } }
 
     public void Init()
     {
@@ -31,6 +34,16 @@ public class MapCreatorLoader : MonoBehaviour
         MakeGround();
         MakeCamera();
         MakeGui();
+        MakeParkingZone();
+    }
+
+    private void MakeParkingZone()
+    {
+        GameObject parkingZoneInstance = new GameObject("ParkingZone");
+        Attach(parkingZoneInstance);
+        ParkingZone component = parkingZoneInstance.AddComponent<ParkingZone>();
+
+        parkingZone = component;
     }
 
     private void MakeBaseMapObject()
@@ -57,5 +70,10 @@ public class MapCreatorLoader : MonoBehaviour
     {
         guiController = Instantiate(guiControllerPrefab);
         guiController.transform.SetParent(baseMapObject.transform, false);
+    }
+
+    public void Attach(GameObject obj)
+    {
+        obj.transform.SetParent(baseMapObject.transform, false);
     }
 }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
@@ -7,6 +8,7 @@ public class CameraController : MonoBehaviour
 
     private GameObject pointer;
     public GameObject Poiner { get { return pointer; } }
+    public event Action PointerPositionChanged = delegate { };
 
     private void Awake()
     {
@@ -14,10 +16,10 @@ public class CameraController : MonoBehaviour
         pointer.GetComponent<MeshRenderer>().material.color = Color.red;
         pointer.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
         pointer.transform.Rotate(Vector3.right, 90f);
-        pointer.transform.SetParent(MapCreatorLoader.Instance.BaseMapObject.transform);
+        MapCreatorLoader.Instance.Attach(pointer);
     }
 
-    private void Update ()
+    private void Update()
     {
         var translationZ = Input.GetAxis("Vertical") * moveSpeed;
         var translationX = Input.GetAxis("Horizontal") * moveSpeed;
@@ -36,6 +38,7 @@ public class CameraController : MonoBehaviour
             var point = ray.GetPoint(dist);
             point.y = 0f;
             pointer.transform.position = point;
+            PointerPositionChanged();
         }
     }
 }

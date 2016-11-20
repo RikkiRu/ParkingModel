@@ -9,6 +9,8 @@ public class Loader : MonoBehaviour
     private MapCreatorLoader mapCreator;
     private EventSystem eventSystem;
 
+    public EventSystem EventSystem { get { return eventSystem; } }
+
     private void Awake()
     {
         mapCreator = Instantiate(mapCreatorPrefab);
