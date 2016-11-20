@@ -7,9 +7,10 @@ public class ParkingZone : MonoBehaviour
     private List<Vector2> vertices2D;
     private Mesh mesh;
     private MeshFilter filter;
-
     private bool editActive;
     private int editVertexIndx;
+    private Transform sphereHolder;
+    private List<GameObject> spheres;
 
     private void Awake()
     {
@@ -36,6 +37,11 @@ public class ParkingZone : MonoBehaviour
 
         transform.Rotate(Vector3.right, 90f);
         transform.localPosition = new Vector3(0, 0.1f, 0);
+
+        spheres = new List<GameObject>();
+        GameObject sphereHolderObj = new GameObject("SphereHolder");
+        sphereHolderObj.transform.SetParent(transform, false);
+        sphereHolder = sphereHolderObj.transform;
     }
 
     private void OnEnable()
@@ -68,10 +74,26 @@ public class ParkingZone : MonoBehaviour
     {
         int[] indices = Triangulator.Triangulate(vertices2D);
         Vector3[] vertices = vertices2D.Select(c => new Vector3(c.x, c.y, 0)).ToArray();
+        mesh.Clear();
         mesh.vertices = vertices;
         mesh.triangles = indices;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
+
+        foreach (var i in spheres)
+            Destroy(i.gameObject);
+
+        spheres.Clear();
+
+        foreach (var i in vertices2D)
+        {
+            GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.transform.SetParent(sphereHolder, false);
+            sphere.transform.localPosition = new Vector3(i.x, i.y, 0);
+            sphere.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+            sphere.GetComponent<MeshRenderer>().material.color = Color.blue;
+            spheres.Add(sphere);
+        }
     }
 
     private void Start()
@@ -81,24 +103,56 @@ public class ParkingZone : MonoBehaviour
 
     public void AddPoint()
     {
+        List<Vector2> averages = new List<Vector2>();
+
+        for (int i = 0; i < vertices2D.Count - 1; i++)
+        {
+            Vector2 v1 = vertices2D[i];
+            Vector2 v2 = vertices2D[i + 1];
+            Vector2 n = new Vector2((v1.x + v2.x) / 2, (v1.y + v2.y) / 2);
+            averages.Add(n);
+        }
+
+        Vector2 vn1 = vertices2D[0];
+        Vector2 vn2 = vertices2D[vertices2D.Count - 1];
+        Vector2 vn = new Vector2((vn1.x + vn2.x) / 2, (vn1.y + vn2.y) / 2);
+        averages.Add(vn);
+
+        Vector3 p = MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition;
+        Vector2 p2d = new Vector2(p.x, p.z);
+        int closest = FindClosest(averages, p2d);
+
+        int insertPoint = closest + 1;
+        if (insertPoint >= vertices2D.Count)
+            insertPoint = 0;
+
+        vertices2D.Insert(insertPoint, p2d);
+        ReDraw();
     }
 
     public void RemovePoint()
     {
+        if(vertices2D.Count <= 4)
+        {
+            Debug.LogWarning("To small points count");
+            return;
+        }
+
+        Vector3 p = MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition;
+        int indxMinDist = FindClosest(vertices2D, new Vector2(p.x, p.z));
+        vertices2D.RemoveAt(indxMinDist);
+        ReDraw();
     }
 
-    private void FindEditVertex()
+    private int FindClosest(List<Vector2> list, Vector2 p)
     {
         int indxMinDist = -1;
         float minDist = float.MaxValue;
 
-        Vector3 pointer = MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition;
-        Vector2 pointer2d = new Vector2(pointer.x, pointer.z);
-
-        for (int i = 0; i < vertices2D.Count; i++)
+        for (int i = 0; i < list.Count; i++)
         {
-            Vector2 check = vertices2D[i];
-            float dist = Vector2.Distance(check, pointer2d);
+            Vector2 check = list[i];
+            float dist = Vector2.Distance(check, p);
 
             if (dist < minDist)
             {
@@ -107,6 +161,13 @@ public class ParkingZone : MonoBehaviour
             }
         }
 
+        return indxMinDist;
+    }
+
+    private void FindEditVertex()
+    {
+        Vector3 p = MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition;
+        int indxMinDist = FindClosest(vertices2D, new Vector2(p.x, p.z));
         editVertexIndx = indxMinDist;
     }
 

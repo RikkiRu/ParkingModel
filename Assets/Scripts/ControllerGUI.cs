@@ -29,6 +29,12 @@ public class ControllerGUI : MonoBehaviour
         CheckPointEdit();
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+            OnPointEditClick();
+    }
+
     private void CheckPointEdit()
     {
         if (pointEditEnabled)
@@ -43,16 +49,14 @@ public class ControllerGUI : MonoBehaviour
     {
         pointEditEnabled = false;
         CheckPointEdit();
-
-        MapCreatorLoader.Instance.ParkingZone.AddPoint();
+        MapCreatorLoader.Instance.ParkingZone.RemovePoint();
     }
 
     private void OnPointAddClick()
     {
         pointEditEnabled = false;
         CheckPointEdit();
-
-        MapCreatorLoader.Instance.ParkingZone.RemovePoint();
+        MapCreatorLoader.Instance.ParkingZone.AddPoint();
     }
 
     private void OnQuadZoneClick()
