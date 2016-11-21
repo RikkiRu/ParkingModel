@@ -5,9 +5,19 @@ public class MapCreatorLoader : MonoBehaviour
 {
     public static MapCreatorLoader Instance;
 
+    public static Vector2 Pointer2d
+    {
+        get
+        {
+            Vector3 p = Instance.CameraInstance.Poiner.transform.localPosition;
+            return new Vector2(p.x, p.z);
+        }
+    }
+
     [SerializeField] CameraController cameraPrefab;
     [SerializeField] GameObject baseMapObjectPrefab;
     [SerializeField] ControllerGUI guiControllerPrefab;
+    [SerializeField] ParkingZone parkingZonePrefab;
 
     private const float sizeX = 10000;
     private const float sizeY = sizeX;
@@ -39,11 +49,8 @@ public class MapCreatorLoader : MonoBehaviour
 
     private void MakeParkingZone()
     {
-        GameObject parkingZoneInstance = new GameObject("ParkingZone");
-        Attach(parkingZoneInstance);
-        ParkingZone component = parkingZoneInstance.AddComponent<ParkingZone>();
-
-        parkingZone = component;
+        parkingZone = Instantiate(parkingZonePrefab);
+        Attach(parkingZone.gameObject);
     }
 
     private void MakeBaseMapObject()

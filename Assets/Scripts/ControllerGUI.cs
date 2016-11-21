@@ -8,9 +8,10 @@ public class ControllerGUI : MonoBehaviour
     [SerializeField] Button pointAdd;
     [SerializeField] Button pointRemove;
     [SerializeField] Button pointEdit;
-
+    [SerializeField] Button makeNode;
+    [SerializeField] Button makeConnectedNode;
+    [SerializeField] Button removeNode;
     [SerializeField] Text pointEditText;
-
     [SerializeField] QuadZone quadZonePrefab;
 
     private bool pointEditEnabled;
@@ -21,6 +22,27 @@ public class ControllerGUI : MonoBehaviour
         pointAdd.onClick.AddListener(OnPointAddClick);
         pointRemove.onClick.AddListener(OnPointRemoveClick);
         pointEdit.onClick.AddListener(OnPointEditClick);
+        makeNode.onClick.AddListener(OnMakeNodeClick);
+        makeConnectedNode.onClick.AddListener(OnMakeConnectedNode);
+        removeNode.onClick.AddListener(OnRemoveNodeClick);
+    }
+
+    private void OnMakeConnectedNode()
+    {
+        CommonClick();
+        MapCreatorLoader.Instance.ParkingZone.AddNode(true);
+    }
+
+    private void OnRemoveNodeClick()
+    {
+        CommonClick();
+        MapCreatorLoader.Instance.ParkingZone.RemoveNode();
+    }
+
+    private void OnMakeNodeClick()
+    {
+        CommonClick();
+        MapCreatorLoader.Instance.ParkingZone.AddNode(false);
     }
 
     private void OnPointEditClick()
@@ -47,22 +69,25 @@ public class ControllerGUI : MonoBehaviour
 
     private void OnPointRemoveClick()
     {
-        pointEditEnabled = false;
-        CheckPointEdit();
+        CommonClick();
         MapCreatorLoader.Instance.ParkingZone.RemovePoint();
     }
 
     private void OnPointAddClick()
     {
+        CommonClick();
+        MapCreatorLoader.Instance.ParkingZone.AddPoint();
+    }
+
+    private void CommonClick()
+    {
         pointEditEnabled = false;
         CheckPointEdit();
-        MapCreatorLoader.Instance.ParkingZone.AddPoint();
     }
 
     private void OnQuadZoneClick()
     {
-        pointEditEnabled = false;
-        CheckPointEdit();
+        CommonClick();
 
         QuadZone zone = Instantiate(quadZonePrefab);
         MapCreatorLoader.Instance.Attach(zone.gameObject);

@@ -4,17 +4,23 @@ using System.Linq;
 
 public class ParkingZone : MonoBehaviour
 {
-    private List<Vector2> vertices2D;
+    [SerializeField] PathNode pathNodePrefab;
+    
     private Mesh mesh;
     private MeshFilter filter;
     private bool editActive;
     private int editVertexIndx;
     private Transform sphereHolder;
+    private Transform nodeHolder;
+
+    private List<Vector2> vertices2D;
     private List<GameObject> spheres;
+    private List<PathNode> nodes;
 
     private void Awake()
     {
         vertices2D = new List<Vector2>();
+       
         vertices2D.Add(new Vector2(0, 0));
         vertices2D.Add(new Vector2(0, 25));
         vertices2D.Add(new Vector2(25, 25));
@@ -42,6 +48,11 @@ public class ParkingZone : MonoBehaviour
         GameObject sphereHolderObj = new GameObject("SphereHolder");
         sphereHolderObj.transform.SetParent(transform, false);
         sphereHolder = sphereHolderObj.transform;
+
+        nodes = new List<PathNode>();
+        GameObject nodeHolderObj = new GameObject("NodeHolder");
+        nodeHolderObj.transform.SetParent(transform, false);
+        nodeHolder = nodeHolderObj.transform;
     }
 
     private void OnEnable()
@@ -56,6 +67,8 @@ public class ParkingZone : MonoBehaviour
 
     private void PointerPositionChanged()
     {
+        Vector2 pos2d = MapCreatorLoader.Pointer2d;
+
         if (editActive)
         {
             if (vertices2D.Count <= editVertexIndx || editVertexIndx < 0)
@@ -64,10 +77,11 @@ public class ParkingZone : MonoBehaviour
                 return;
             }
 
-            var pos = MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition;
-            vertices2D[editVertexIndx] = new Vector2(pos.x, pos.z);
+            vertices2D[editVertexIndx] = pos2d;
             ReDraw();
         }
+
+        //bool inPoly = GeometryUtil.Pnpoly(vertices2D.ToArray(), pos2d);
     }
 
     private void ReDraw()
@@ -118,9 +132,8 @@ public class ParkingZone : MonoBehaviour
         Vector2 vn = new Vector2((vn1.x + vn2.x) / 2, (vn1.y + vn2.y) / 2);
         averages.Add(vn);
 
-        Vector3 p = MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition;
-        Vector2 p2d = new Vector2(p.x, p.z);
-        int closest = FindClosest(averages, p2d);
+        Vector2 p2d = MapCreatorLoader.Pointer2d;
+        int closest = GeometryUtil.FindClosest(averages, p2d);
 
         int insertPoint = closest + 1;
         if (insertPoint >= vertices2D.Count)
@@ -138,36 +151,14 @@ public class ParkingZone : MonoBehaviour
             return;
         }
 
-        Vector3 p = MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition;
-        int indxMinDist = FindClosest(vertices2D, new Vector2(p.x, p.z));
+        int indxMinDist = GeometryUtil.FindClosest(vertices2D, MapCreatorLoader.Pointer2d);
         vertices2D.RemoveAt(indxMinDist);
         ReDraw();
     }
 
-    private int FindClosest(List<Vector2> list, Vector2 p)
-    {
-        int indxMinDist = -1;
-        float minDist = float.MaxValue;
-
-        for (int i = 0; i < list.Count; i++)
-        {
-            Vector2 check = list[i];
-            float dist = Vector2.Distance(check, p);
-
-            if (dist < minDist)
-            {
-                indxMinDist = i;
-                minDist = dist;
-            }
-        }
-
-        return indxMinDist;
-    }
-
     private void FindEditVertex()
     {
-        Vector3 p = MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition;
-        int indxMinDist = FindClosest(vertices2D, new Vector2(p.x, p.z));
+        int indxMinDist = GeometryUtil.FindClosest(vertices2D, MapCreatorLoader.Pointer2d);
         editVertexIndx = indxMinDist;
     }
 
@@ -177,5 +168,49 @@ public class ParkingZone : MonoBehaviour
             FindEditVertex();
 
         editActive = active;
+    }
+
+    public void AddNode(bool connect)
+    {
+        float dist;
+        int idClosest = GeometryUtil.FindClosest(nodes, MapCreatorLoader.Pointer2d, out dist);
+
+        PathNode node = null;
+
+        //if (connect && idClosest >= 0 && dist < 3)
+        //{
+        //    //node = 
+        //    return;
+        //}
+
+        node = Instantiate(pathNodePrefab);
+        node.transform.SetParent(nodeHolder, false);
+        Vector2 p2d = MapCreatorLoader.Pointer2d;
+        node.transform.localPosition = p2d;
+        node.transform.Translate(new Vector3(0, 0, -0.5f));
+
+        if (connect && idClosest >= 0)
+        {
+            PathNode closest = nodes[idClosest];
+            closest.AddNode(node);
+        }
+
+        nodes.Add(node);
+    }
+
+    public void RemoveNode()
+    {
+        Vector2 p2d = MapCreatorLoader.Pointer2d;
+        int id = GeometryUtil.FindClosest(nodes, p2d);
+        if (id < 0)
+            return;
+
+        PathNode removingNode = nodes[id];
+
+        foreach (var i in nodes)
+            i.CheckNodeForRemove(removingNode);
+
+        Destroy(removingNode.gameObject);
+        nodes.Remove(removingNode);
     }
 }
