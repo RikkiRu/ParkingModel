@@ -14,6 +14,15 @@ public class MapCreatorLoader : MonoBehaviour
         }
     }
 
+    public static Vector3 Pointer3d
+    {
+        get
+        {
+            Vector3 p = Instance.CameraInstance.Poiner.transform.localPosition;
+            return new Vector3(p.x, p.y, p.z);
+        }
+    }
+
     [SerializeField] CameraController cameraPrefab;
     [SerializeField] GameObject baseMapObjectPrefab;
     [SerializeField] ControllerGUI guiControllerPrefab;
@@ -68,7 +77,8 @@ public class MapCreatorLoader : MonoBehaviour
     {
         ground = MeshUtil.MakeSolidMesh("Ground", sizeX, sizeY, color);
         ground.transform.SetParent(baseMapObject.transform, false);
-        ground.transform.Rotate(Vector3.right, 90f);
+        MeshRenderer render = ground.GetComponent<MeshRenderer>();
+        render.sortingOrder = 0;
 
         groundPlane = new Plane(Vector3.up, Vector3.zero);
     }

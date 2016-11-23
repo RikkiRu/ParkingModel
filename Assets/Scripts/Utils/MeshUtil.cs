@@ -2,9 +2,22 @@
 
 public class MeshUtil
 {
-    public static void CreateMesh(GameObject plane, float width, float height)
+    private static Shader shaderSprite;
+
+    public static Shader ShaderSprite
     {
-        MeshFilter meshFilter = (MeshFilter)plane.AddComponent(typeof(MeshFilter));
+        get
+        {
+            if (shaderSprite == null)
+                shaderSprite = Shader.Find("Sprites/Diffuse");
+
+            return shaderSprite;
+        }
+    }
+
+    public static MeshFilter CreateMesh(GameObject plane, float width, float height)
+    {
+        MeshFilter meshFilter = plane.AddComponent<MeshFilter>();
 
         Mesh m = new Mesh();
         m.name = "ScriptedMesh";
@@ -14,10 +27,10 @@ public class MeshUtil
 
         m.vertices = new Vector3[]
         {
-         new Vector3(-width2, -height2, 0f),
-         new Vector3(width2, -height2, 0f),
-         new Vector3(-width2, height2, 0f),
-         new Vector3(width2, height2, 0f),
+         new Vector3(-width2, 0, -height2),
+         new Vector3(width2, 0, -height2),
+         new Vector3(-width2, 0, height2),
+         new Vector3(width2, 0, height2),
         };
 
         m.uv = new Vector2[] 
@@ -33,12 +46,16 @@ public class MeshUtil
         m.Optimize();
 
         meshFilter.mesh = m;
+
+        return meshFilter;
     }
 
-    public static void ApplyMaterial(GameObject plane, Color color)
+    public static MeshRenderer ApplyMaterial(GameObject plane, Color color)
     {
-        MeshRenderer renderer = plane.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
+        MeshRenderer renderer = plane.AddComponent<MeshRenderer>();
+        renderer.material.shader = Shader.Find("Sprites/Diffuse");
         renderer.material.color = color;
+        return renderer;
     }
 
     public static GameObject MakeSolidMesh(string name, float sizeX, float sizeY, Color32 color)

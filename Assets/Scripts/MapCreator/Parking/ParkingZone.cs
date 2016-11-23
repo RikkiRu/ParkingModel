@@ -39,10 +39,8 @@ public class ParkingZone : MonoBehaviour
         filter = gameObject.AddComponent<MeshFilter>();
         filter.mesh = mesh;
 
-        MeshUtil.ApplyMaterial(gameObject, new Color32(165, 165, 165, 255));
-
-        transform.Rotate(Vector3.right, 90f);
-        transform.localPosition = new Vector3(0, 0.1f, 0);
+        var meshRender = MeshUtil.ApplyMaterial(gameObject, new Color32(165, 165, 165, 255));
+        meshRender.sortingOrder = 10;
 
         spheres = new List<GameObject>();
         GameObject sphereHolderObj = new GameObject("SphereHolder");
@@ -87,7 +85,7 @@ public class ParkingZone : MonoBehaviour
     private void ReDraw()
     {
         int[] indices = Triangulator.Triangulate(vertices2D);
-        Vector3[] vertices = vertices2D.Select(c => new Vector3(c.x, c.y, 0)).ToArray();
+        Vector3[] vertices = vertices2D.Select(c => new Vector3(c.x, 0, c.y)).ToArray();
         mesh.Clear();
         mesh.vertices = vertices;
         mesh.triangles = indices;
@@ -103,7 +101,7 @@ public class ParkingZone : MonoBehaviour
         {
             GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.transform.SetParent(sphereHolder, false);
-            sphere.transform.localPosition = new Vector3(i.x, i.y, 0);
+            sphere.transform.localPosition = new Vector3(i.x, 0, i.y);
             sphere.transform.localScale = new Vector3(0.4f, 0.4f, 0.4f);
             sphere.GetComponent<MeshRenderer>().material.color = Color.blue;
             spheres.Add(sphere);
@@ -177,17 +175,11 @@ public class ParkingZone : MonoBehaviour
 
         PathNode node = null;
 
-        //if (connect && idClosest >= 0 && dist < 3)
-        //{
-        //    //node = 
-        //    return;
-        //}
-
         node = Instantiate(pathNodePrefab);
         node.transform.SetParent(nodeHolder, false);
-        Vector2 p2d = MapCreatorLoader.Pointer2d;
-        node.transform.localPosition = p2d;
-        node.transform.Translate(new Vector3(0, 0, -0.5f));
+        Vector3 p3d = MapCreatorLoader.Pointer3d;
+        node.transform.localPosition = p3d;
+        //node.transform.Translate(new Vector3(0, -0.5f, 0));
 
         if (connect && idClosest >= 0)
         {

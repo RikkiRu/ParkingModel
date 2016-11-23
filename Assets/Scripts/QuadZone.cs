@@ -1,46 +1,49 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 public class QuadZone : MonoBehaviour
 {
-    private Vector3[] vertex;
     private MeshFilter filter;
-    private GameObject[] spheres;
+    private Mesh mesh;
 
     private void Awake()
     {
-        vertex = new Vector3[]
-        {
-            new Vector3(-5, -5, 0f),
-            new Vector3(5, -5, 0f),
-            new Vector3(-5, 5, 0f),
-            new Vector3(5, 5, 0f),
-        };
-
-        MeshUtil.CreateMesh(gameObject, 10, 10);
-        MeshUtil.ApplyMaterial(gameObject, Color.gray);
-
-        transform.Rotate(Vector3.right, 90f);
-
-        spheres = new GameObject[vertex.Length];
-        for (int i=0; i<vertex.Length; i++)
-        {
-            GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            spheres[i] = sphere;
-
-            sphere.transform.SetParent(transform, false);
-            sphere.transform.localPosition = vertex[i];
-            sphere.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
-        }
-
-        filter = gameObject.GetComponent<MeshFilter>();
-        UpdateMesh();
+        //filter = MeshUtil.CreateMesh(gameObject, 10, 10);
+        //MeshUtil.ApplyMaterial(gameObject, Color.gray);
     }
 
-    private void UpdateMesh()
+    public void UpdateMesh(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4)
     {
-        filter.mesh.vertices = vertex;
+        List<Vector2> vertices2D = new List<Vector2>();
+        vertices2D.Add(p1);
+        vertices2D.Add(p3);
+        vertices2D.Add(p4);
+        vertices2D.Add(p2);
 
-        for (int i = 0; i < vertex.Length; i++)
-            spheres[i].transform.localPosition = vertex[i];
+        Debug.Log("P1: " + p1.ToString());
+        Debug.Log("P2: " + p2.ToString());
+        Debug.Log("P3: " + p3.ToString());
+        Debug.Log("P4: " + p4.ToString());
+
+        if (mesh == null)
+            mesh = new Mesh();
+
+        mesh.name = "QuadZoneMesh";
+
+        if (filter == null)
+            filter = gameObject.AddComponent<MeshFilter>();
+
+        filter.mesh = mesh;
+
+        var meshRender = MeshUtil.ApplyMaterial(gameObject, new Color32(210, 210, 210, 255));
+
+        int[] indices = Triangulator.Triangulate(vertices2D);
+        Vector3[] vertices = vertices2D.Select(c => new Vector3(c.x, 0, c.y)).ToArray();
+        mesh.Clear();
+        mesh.vertices = vertices;
+        mesh.triangles = indices;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
     }
 }

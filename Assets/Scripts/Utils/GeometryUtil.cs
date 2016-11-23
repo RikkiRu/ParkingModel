@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GeometryUtil
@@ -86,5 +87,66 @@ public class GeometryUtil
         }
 
         return indxMinDist;
+    }
+
+    public static Vector2 VectAvarage(Vector2 v1, Vector2 v2)
+    {
+        float x = (v1.x + v2.x) / 2;
+        float y = (v1.y + v2.y) / 2;
+        x = (float)Math.Round(x, 2);
+        y = (float)Math.Round(y, 2);
+
+        return new Vector2(x, y);
+    }
+
+    public static Vector3 V3 (Vector2 v)
+    {
+        return new Vector3(v.x, 0, v.y);
+    }
+
+    public class LineOptions
+    {
+        public float A { get; set; }
+        public float B { get; set; }
+        public float C { get; set; }
+
+        public float NormX { get; set; }
+        public float NormY { get; set; }
+
+        public float DirX { get { return -B; } }
+        public float DirY { get { return A; } }
+
+        public LineOptions(Vector2 p1, Vector2 p2)
+        {
+            float dy = p2.y - p1.y;
+            float dx = p2.x - p1.x;
+
+            A = dy;
+            B = -dx;
+            C = p1.y * dx - p1.x * dy;
+
+            NormX = A;
+            NormY = B;
+
+            float kX = NormX > 0 ? 1 : -1;
+            float kY = NormY > 0 ? 1 : -1;
+
+            if (Mathf.Abs(NormX) > Math.Abs(NormY))
+            {
+                NormY = Math.Abs(NormY / NormX);
+                NormX = 1;
+            }
+            else
+            {
+                NormX = Math.Abs(NormX / NormY);
+                NormY = 1;
+            }
+
+            NormX = NormX * kX;
+            NormY = NormY * kY;
+
+            if (A == 0 && B == 0)
+                throw new Exception("Look like line is not line - it's point");
+        }
     }
 }
