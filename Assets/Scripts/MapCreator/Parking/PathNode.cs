@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 public class PathNode : MonoBehaviour
 {
+    private const float DirScale = 1.5f;        // Расширение дороги по напр. веектору
+    private const float NormScale = 2.0f;       // Расширение дороги по вектору нормали
+    private const float MagenetD = 2f;        // Дистанция слипания точек
+
     [SerializeField] QuadZone quadZonePrefab;
 
     public bool UserNode { get; set; }
@@ -16,6 +20,7 @@ public class PathNode : MonoBehaviour
     {
         OutNodes = new List<PathNode>();
         objects = new List<GameObject>();
+        magnetPoints = new List<Vector2>();
 
         GameObject lineHolderObj = new GameObject("LineHolder");
         lineHolderObj.transform.SetParent(transform, false);
@@ -33,6 +38,9 @@ public class PathNode : MonoBehaviour
 
     public void AddNode(PathNode node)
     {
+        if (OutNodes.Contains(node))
+            return;
+
         OutNodes.Add(node);
         ReDraw();
     }
@@ -58,19 +66,16 @@ public class PathNode : MonoBehaviour
         {
             Vector2 p1 = new Vector2(transform.position.x, transform.position.z);
             Vector2 p2 = new Vector2(i.transform.position.x, i.transform.position.z);
-            
-            const float dirScale = 1.5f;
-            const float normScale = 2;
 
             GeometryUtil.LineOptions lineOpt = new GeometryUtil.LineOptions(p1, p2);
 
-            float dNormScale = normScale / Mathf.Sqrt(Mathf.Pow(lineOpt.NormX, 2) + Mathf.Pow(lineOpt.NormY, 2));
+            float dNormScale = NormScale / Mathf.Sqrt(Mathf.Pow(lineOpt.NormX, 2) + Mathf.Pow(lineOpt.NormY, 2));
 
             Vector2 s1 = p1;
             Vector2 s2 = p2;
 
-            float dirX = lineOpt.AbsDirX * dirScale;
-            float dirY = lineOpt.AbsDirY * dirScale;
+            float dirX = lineOpt.AbsDirX * DirScale;
+            float dirY = lineOpt.AbsDirY * DirScale;
 
             if (s1.x < s2.x)
                 dirX = -dirX;
@@ -86,6 +91,9 @@ public class PathNode : MonoBehaviour
             Vector2 q3 = new Vector2(s2.x - lineOpt.NormX * dNormScale, s2.y - lineOpt.NormY * dNormScale);
             Vector2 q4 = new Vector2(s2.x + lineOpt.NormX * dNormScale, s2.y + lineOpt.NormY * dNormScale);
 
+            CorrectWithMagnetPoints(ref q1, ref q2);
+            i.CorrectWithMagnetPoints(ref q3, ref q4);
+
             var quad = Instantiate(quadZonePrefab);
             MapCreatorLoader.Instance.Attach(quad.gameObject);
             quad.UpdateMesh(q1, q2, q3, q4);
@@ -98,6 +106,48 @@ public class PathNode : MonoBehaviour
             lineRender.sortingOrder = 40;
             objects.Add(line);
         }
+    }
+
+    public void CorrectWithMagnetPoints(ref Vector2 distation1, ref Vector2 distation2)
+    {
+        bool wasChanges1 = false;
+        bool wasChanges2 = false;
+
+        float minDist1 = float.MaxValue;
+        float minDist2 = float.MaxValue;
+
+        Vector2 closest1 = Vector2.zero;
+        Vector2 closest2 = Vector2.zero;
+
+        foreach (var i in magnetPoints)
+        {
+            float d1 = Vector2.Distance(distation1, i);
+            float d2 = Vector2.Distance(distation2, i);
+
+            if (d1 < minDist1)
+            {
+                wasChanges1 = true;
+                minDist1 = d1;
+                closest1 = i;
+            }
+
+            if (d2 < minDist2)
+            {
+                wasChanges2 = true;
+                minDist2 = d2;
+                closest2 = i;
+            }
+        }
+
+        if (!wasChanges1 || minDist1 > MagenetD)
+            magnetPoints.Add(distation1);
+        else
+            distation1 = closest1;
+
+        if (!wasChanges2 || minDist2 > MagenetD)
+            magnetPoints.Add(distation2);
+        else
+            distation2 = closest2;
     }
 
     private GameObject MakeLine(Vector3 start, Vector3 end, Color color)

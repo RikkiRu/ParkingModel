@@ -89,7 +89,6 @@ public class ParkingZone : MonoBehaviour
                 return;
             }
 
-            Debug.Log("Add node!");
             connectNode1.AddNode(closest);
             ExitNodeConnectionMode();
             return;
@@ -112,7 +111,6 @@ public class ParkingZone : MonoBehaviour
 
     private void ExitNodeConnectionMode()
     {
-        Debug.Log("Exit connect node mode");
         connectNode1 = null;
         connectNodesModeOn = false;
     }
