@@ -16,6 +16,8 @@ public class ParkingZone : MonoBehaviour
     private List<Vector2> vertices2D;
     private List<GameObject> spheres;
     private List<PathNode> nodes;
+    private PathNode connectNode1;
+    private bool connectNodesModeOn;
 
     private void Awake()
     {
@@ -67,6 +69,32 @@ public class ParkingZone : MonoBehaviour
     {
         Vector2 pos2d = MapCreatorLoader.Pointer2d;
 
+        if (connectNodesModeOn)
+        {
+            float dist;
+            int idClosest = GeometryUtil.FindClosest(nodes, pos2d, out dist);
+
+            if (idClosest < 0 || connectNode1 == null)
+            {
+                ExitNodeConnectionMode();
+                return;
+            }
+
+            PathNode closest = nodes[idClosest];
+
+            if (closest == connectNode1)
+            {
+                Debug.LogWarning("Can't connect node to self");
+                ExitNodeConnectionMode();
+                return;
+            }
+
+            Debug.Log("Add node!");
+            connectNode1.AddNode(closest);
+            ExitNodeConnectionMode();
+            return;
+        }
+
         if (editActive)
         {
             if (vertices2D.Count <= editVertexIndx || editVertexIndx < 0)
@@ -80,6 +108,13 @@ public class ParkingZone : MonoBehaviour
         }
 
         //bool inPoly = GeometryUtil.Pnpoly(vertices2D.ToArray(), pos2d);
+    }
+
+    private void ExitNodeConnectionMode()
+    {
+        Debug.Log("Exit connect node mode");
+        connectNode1 = null;
+        connectNodesModeOn = false;
     }
 
     private void ReDraw()
@@ -168,30 +203,37 @@ public class ParkingZone : MonoBehaviour
         editActive = active;
     }
 
-    public void AddNode(bool connect)
+    public void ConnectNodesMode()
     {
+        Vector2 pos2d = MapCreatorLoader.Pointer2d;
         float dist;
-        int idClosest = GeometryUtil.FindClosest(nodes, MapCreatorLoader.Pointer2d, out dist);
+        int idClosest = GeometryUtil.FindClosest(nodes, pos2d, out dist);
 
-        PathNode node = null;
+        if (idClosest < 0)
+        {
+            ExitNodeConnectionMode();
+            return;
+        }
 
-        node = Instantiate(pathNodePrefab);
+        PathNode closest = nodes[idClosest];
+
+        connectNode1 = closest;
+        connectNodesModeOn = true;
+    }
+
+    public void AddNode()
+    {
+        PathNode node = Instantiate(pathNodePrefab);
         node.transform.SetParent(nodeHolder, false);
         Vector3 p3d = MapCreatorLoader.Pointer3d;
         node.transform.localPosition = p3d;
-        //node.transform.Translate(new Vector3(0, -0.5f, 0));
-
-        if (connect && idClosest >= 0)
-        {
-            PathNode closest = nodes[idClosest];
-            closest.AddNode(node);
-        }
-
         nodes.Add(node);
     }
 
     public void RemoveNode()
     {
+        ExitNodeConnectionMode();
+
         Vector2 p2d = MapCreatorLoader.Pointer2d;
         int id = GeometryUtil.FindClosest(nodes, p2d);
         if (id < 0)

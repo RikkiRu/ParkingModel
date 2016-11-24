@@ -10,6 +10,8 @@ public class PathNode : MonoBehaviour
     private List<GameObject> objects;
     private Transform objectsHolder;
 
+    public List<Vector2> magnetPoints;
+
     private void Awake()
     {
         OutNodes = new List<PathNode>();
@@ -35,37 +37,57 @@ public class PathNode : MonoBehaviour
         ReDraw();
     }
 
-    private void ReDraw()
+    private void CleanObjects()
     {
         foreach (var i in objects)
             Destroy(i);
 
         objects.Clear();
+    }
+
+    private void OnDestroy()
+    {
+        CleanObjects();
+    }
+
+    private void ReDraw()
+    {
+        CleanObjects();
 
         foreach (var i in OutNodes)
         {
             Vector2 p1 = new Vector2(transform.position.x, transform.position.z);
             Vector2 p2 = new Vector2(i.transform.position.x, i.transform.position.z);
-            Vector2 pA = GeometryUtil.VectAvarage(p1, p2);
-
-            var quad = Instantiate(quadZonePrefab);
-            //quad.transform.SetParent(objectsHolder, false);
-            MapCreatorLoader.Instance.Attach(quad.gameObject);
-            //quad.transform.position = GeometryUtil.V3(pA);
             
-            const float naprScale = 2;
+            const float dirScale = 1.5f;
             const float normScale = 2;
 
             GeometryUtil.LineOptions lineOpt = new GeometryUtil.LineOptions(p1, p2);
 
             float dNormScale = normScale / Mathf.Sqrt(Mathf.Pow(lineOpt.NormX, 2) + Mathf.Pow(lineOpt.NormY, 2));
 
-            Debug.Log("NormX: " + lineOpt.NormX);
-            Debug.Log("NormY: " + lineOpt.NormY);
-            Vector2 q1 = new Vector2(p1.x - lineOpt.NormX * dNormScale, p1.y - lineOpt.NormY * dNormScale);
-            Vector2 q2 = new Vector2(p1.x + lineOpt.NormX * dNormScale, p1.y + lineOpt.NormY * dNormScale);
-            Vector2 q3 = new Vector2(p2.x - lineOpt.NormX * dNormScale, p2.y - lineOpt.NormY * dNormScale);
-            Vector2 q4 = new Vector2(p2.x + lineOpt.NormX * dNormScale, p2.y + lineOpt.NormY * dNormScale);
+            Vector2 s1 = p1;
+            Vector2 s2 = p2;
+
+            float dirX = lineOpt.AbsDirX * dirScale;
+            float dirY = lineOpt.AbsDirY * dirScale;
+
+            if (s1.x < s2.x)
+                dirX = -dirX;
+
+            if (s1.y < s2.y)
+                dirY = -dirY;
+
+            s1 = new Vector2(s1.x + dirX, s1.y + dirY);
+            s2 = new Vector2(s2.x - dirX, s2.y - dirY);
+
+            Vector2 q1 = new Vector2(s1.x - lineOpt.NormX * dNormScale, s1.y - lineOpt.NormY * dNormScale);
+            Vector2 q2 = new Vector2(s1.x + lineOpt.NormX * dNormScale, s1.y + lineOpt.NormY * dNormScale);
+            Vector2 q3 = new Vector2(s2.x - lineOpt.NormX * dNormScale, s2.y - lineOpt.NormY * dNormScale);
+            Vector2 q4 = new Vector2(s2.x + lineOpt.NormX * dNormScale, s2.y + lineOpt.NormY * dNormScale);
+
+            var quad = Instantiate(quadZonePrefab);
+            MapCreatorLoader.Instance.Attach(quad.gameObject);
             quad.UpdateMesh(q1, q2, q3, q4);
             var quadRender = quad.gameObject.GetComponent<MeshRenderer>();
             quadRender.sortingOrder = 30;

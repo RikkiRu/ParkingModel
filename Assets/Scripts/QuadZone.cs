@@ -21,11 +21,6 @@ public class QuadZone : MonoBehaviour
         vertices2D.Add(p4);
         vertices2D.Add(p2);
 
-        Debug.Log("P1: " + p1.ToString());
-        Debug.Log("P2: " + p2.ToString());
-        Debug.Log("P3: " + p3.ToString());
-        Debug.Log("P4: " + p4.ToString());
-
         if (mesh == null)
             mesh = new Mesh();
 
@@ -36,7 +31,7 @@ public class QuadZone : MonoBehaviour
 
         filter.mesh = mesh;
 
-        var meshRender = MeshUtil.ApplyMaterial(gameObject, new Color32(210, 210, 210, 255));
+        MeshUtil.ApplyMaterial(gameObject, new Color32(210, 210, 210, 255));
 
         int[] indices = Triangulator.Triangulate(vertices2D);
         Vector3[] vertices = vertices2D.Select(c => new Vector3(c.x, 0, c.y)).ToArray();

@@ -113,8 +113,8 @@ public class GeometryUtil
         public float NormX { get; set; }
         public float NormY { get; set; }
 
-        public float DirX { get { return -B; } }
-        public float DirY { get { return A; } }
+        public float AbsDirX { get; set; } // -B
+        public float AbsDirY { get; set; } // +A
 
         public LineOptions(Vector2 p1, Vector2 p2)
         {
@@ -125,28 +125,40 @@ public class GeometryUtil
             B = -dx;
             C = p1.y * dx - p1.x * dy;
 
-            NormX = A;
-            NormY = B;
+            if (A == 0 && B == 0)
+                throw new Exception("Look like line is not line - it's point");
 
-            float kX = NormX > 0 ? 1 : -1;
-            float kY = NormY > 0 ? 1 : -1;
+            float normX = A;
+            float normY = B;
+            Normilize(ref normX, ref normY);
+            NormX = normX;
+            NormY = normY;
 
-            if (Mathf.Abs(NormX) > Math.Abs(NormY))
+            float absDirX = -B;
+            float absDirY = +A;
+            Normilize(ref absDirX, ref absDirY);
+            AbsDirX = Mathf.Abs(absDirX);
+            AbsDirY = Mathf.Abs(absDirY);
+        }
+
+        private void Normilize(ref float x, ref float y)
+        {
+            float kX = x > 0 ? 1 : -1;
+            float kY = y > 0 ? 1 : -1;
+
+            if (Mathf.Abs(x) > Math.Abs(y))
             {
-                NormY = Math.Abs(NormY / NormX);
-                NormX = 1;
+                y = Math.Abs(y / x);
+                x = 1;
             }
             else
             {
-                NormX = Math.Abs(NormX / NormY);
-                NormY = 1;
+                x = Math.Abs(x / y);
+                y = 1;
             }
 
-            NormX = NormX * kX;
-            NormY = NormY * kY;
-
-            if (A == 0 && B == 0)
-                throw new Exception("Look like line is not line - it's point");
+            x = x * kX;
+            y = y * kY;
         }
     }
 }

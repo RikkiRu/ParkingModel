@@ -30,7 +30,7 @@ public class ControllerGUI : MonoBehaviour
     private void OnMakeConnectedNode()
     {
         CommonClick();
-        MapCreatorLoader.Instance.ParkingZone.AddNode(true);
+        MapCreatorLoader.Instance.ParkingZone.ConnectNodesMode();
     }
 
     private void OnRemoveNodeClick()
@@ -42,7 +42,7 @@ public class ControllerGUI : MonoBehaviour
     private void OnMakeNodeClick()
     {
         CommonClick();
-        MapCreatorLoader.Instance.ParkingZone.AddNode(false);
+        MapCreatorLoader.Instance.ParkingZone.AddNode();
     }
 
     private void OnPointEditClick()
