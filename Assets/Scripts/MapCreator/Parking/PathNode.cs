@@ -1,30 +1,29 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class PathNode : MonoBehaviour
 {
-    private const float DirScale = 1.5f;        // Расширение дороги по напр. веектору
     private const float NormScale = 2.0f;       // Расширение дороги по вектору нормали
-    private const float MagenetD = 2f;        // Дистанция слипания точек
+    private const float NodeBaseScale = 2f;     // Скейл платформы
 
     [SerializeField] QuadZone quadZonePrefab;
 
-    public bool UserNode { get; set; }
     public List<PathNode> OutNodes { get; set; }
-    private List<GameObject> objects;
-    private Transform objectsHolder;
-
-    public List<Vector2> magnetPoints;
+    public List<Vector2> MagnetPoints { get; set; }
+    private List<GameObject> Objects { get; set; }
+    private GameObject PlatformObject { get; set; }
+    private Transform ObjectsHolder { get; set; }
 
     private void Awake()
     {
         OutNodes = new List<PathNode>();
-        objects = new List<GameObject>();
-        magnetPoints = new List<Vector2>();
+        Objects = new List<GameObject>();
+        MagnetPoints = null;
 
-        GameObject lineHolderObj = new GameObject("LineHolder");
+        GameObject lineHolderObj = new GameObject("NodeChilds");
         lineHolderObj.transform.SetParent(transform, false);
-        objectsHolder = lineHolderObj.transform;
+        ObjectsHolder = lineHolderObj.transform;
     }
 
     public void CheckNodeForRemove(PathNode node)
@@ -47,20 +46,28 @@ public class PathNode : MonoBehaviour
 
     private void CleanObjects()
     {
-        foreach (var i in objects)
+        foreach (var i in Objects)
             Destroy(i);
 
-        objects.Clear();
+        Objects.Clear();
     }
 
     private void OnDestroy()
     {
+        if (PlatformObject != null)
+        {
+            Destroy(PlatformObject);
+            PlatformObject = null;
+        }
+
         CleanObjects();
     }
 
     private void ReDraw()
     {
         CleanObjects();
+
+ 
 
         foreach (var i in OutNodes)
         {
@@ -74,18 +81,6 @@ public class PathNode : MonoBehaviour
             Vector2 s1 = p1;
             Vector2 s2 = p2;
 
-            float dirX = lineOpt.AbsDirX * DirScale;
-            float dirY = lineOpt.AbsDirY * DirScale;
-
-            if (s1.x < s2.x)
-                dirX = -dirX;
-
-            if (s1.y < s2.y)
-                dirY = -dirY;
-
-            s1 = new Vector2(s1.x + dirX, s1.y + dirY);
-            s2 = new Vector2(s2.x - dirX, s2.y - dirY);
-
             Vector2 q1 = new Vector2(s1.x - lineOpt.NormX * dNormScale, s1.y - lineOpt.NormY * dNormScale);
             Vector2 q2 = new Vector2(s1.x + lineOpt.NormX * dNormScale, s1.y + lineOpt.NormY * dNormScale);
             Vector2 q3 = new Vector2(s2.x - lineOpt.NormX * dNormScale, s2.y - lineOpt.NormY * dNormScale);
@@ -96,64 +91,58 @@ public class PathNode : MonoBehaviour
 
             var quad = Instantiate(quadZonePrefab);
             MapCreatorLoader.Instance.Attach(quad.gameObject);
-            quad.UpdateMesh(q1, q2, q3, q4);
+            quad.Color = Colors.RoadColor;
+            quad.Init(q1, q2, q3, q4);
             var quadRender = quad.gameObject.GetComponent<MeshRenderer>();
-            quadRender.sortingOrder = 30;
-            objects.Add(quad.gameObject);
+            quadRender.sortingOrder = SortingOrder.Is(Layer.Road);
+            Objects.Add(quad.gameObject);
 
-            var line = MakeLine(GeometryUtil.V3(p1), GeometryUtil.V3(p2), Color.black);
+            var line = MakeLine(GeometryUtil.V3(p1), GeometryUtil.V3(p2), Colors.NodeLineColor);
             var lineRender = line.GetComponent<LineRenderer>();
-            lineRender.sortingOrder = 40;
-            objects.Add(line);
+            lineRender.sortingOrder = SortingOrder.Is(Layer.NodeLine);
+            Objects.Add(line);
         }
+    }
+
+    private MagnetInfo GetMagnetPointsInfo(Vector2 distation)
+    {
+        MagnetInfo info = new MagnetInfo();
+
+        foreach (var i in MagnetPoints)
+        {
+            float dist = Vector2.Distance(distation, i);
+
+            if (dist < info.MinDist)
+            {
+                info.WasChanges = true;
+                info.MinDist = dist;
+                info.Closest = i;
+            }
+        }
+
+        return info;
+    }
+
+    private void ProcessMagnetPointsInfo(MagnetInfo info, ref Vector2 distation)
+    {
+        if (!info.WasChanges)
+            MagnetPoints.Add(distation);
+        else
+            distation = info.Closest;
     }
 
     public void CorrectWithMagnetPoints(ref Vector2 distation1, ref Vector2 distation2)
     {
-        bool wasChanges1 = false;
-        bool wasChanges2 = false;
-
-        float minDist1 = float.MaxValue;
-        float minDist2 = float.MaxValue;
-
-        Vector2 closest1 = Vector2.zero;
-        Vector2 closest2 = Vector2.zero;
-
-        foreach (var i in magnetPoints)
-        {
-            float d1 = Vector2.Distance(distation1, i);
-            float d2 = Vector2.Distance(distation2, i);
-
-            if (d1 < minDist1)
-            {
-                wasChanges1 = true;
-                minDist1 = d1;
-                closest1 = i;
-            }
-
-            if (d2 < minDist2)
-            {
-                wasChanges2 = true;
-                minDist2 = d2;
-                closest2 = i;
-            }
-        }
-
-        if (!wasChanges1 || minDist1 > MagenetD)
-            magnetPoints.Add(distation1);
-        else
-            distation1 = closest1;
-
-        if (!wasChanges2 || minDist2 > MagenetD)
-            magnetPoints.Add(distation2);
-        else
-            distation2 = closest2;
+        var info1 = GetMagnetPointsInfo(distation1);
+        var info2 = GetMagnetPointsInfo(distation2);
+        ProcessMagnetPointsInfo(info1, ref distation1);
+        ProcessMagnetPointsInfo(info2, ref distation2);
     }
 
     private GameObject MakeLine(Vector3 start, Vector3 end, Color color)
     {
         GameObject myLine = new GameObject("line");
-        myLine.transform.SetParent(objectsHolder, false);
+        myLine.transform.SetParent(ObjectsHolder, false);
         myLine.transform.position = start;
         LineRenderer lr = myLine.AddComponent<LineRenderer>();
         lr.material = new Material(MeshUtil.ShaderSprite);
@@ -162,5 +151,40 @@ public class PathNode : MonoBehaviour
         lr.SetPosition(0, start);
         lr.SetPosition(1, end);
         return myLine;
+    }
+
+    public void SetPosition(Vector3 p3d)
+    {
+        transform.localPosition = p3d;
+
+        var shape = Shapes.Get(Shape.Edge8, NodeBaseScale, transform.localPosition.x, transform.localPosition.z);
+        var platform = Instantiate(quadZonePrefab);
+        platform.name = "NodeBase";
+        MapCreatorLoader.Instance.Attach(platform.gameObject);
+        platform.Color = Colors.RoadColor;
+        platform.Init(shape);
+        var platformRender = platform.gameObject.GetComponent<MeshRenderer>();
+        platformRender.sortingOrder = SortingOrder.Is(Layer.NodeBase);
+        PlatformObject = platform.gameObject;
+
+        MagnetPoints = new List<Vector2>();
+        foreach (var i in shape)
+            MagnetPoints.Add(i);
+
+        ReDraw();
+    }
+
+    private class MagnetInfo
+    {
+        public bool WasChanges { get; set; }
+        public float MinDist { get; set; }
+        public Vector2 Closest { get; set; }
+
+        public MagnetInfo()
+        {
+            WasChanges = false;
+            MinDist = float.MaxValue;
+            Closest = Vector2.zero;
+        }
     }
 }

@@ -9,7 +9,7 @@ public class MeshUtil
         get
         {
             if (shaderSprite == null)
-                shaderSprite = Shader.Find("Sprites/Diffuse");
+                shaderSprite = Shader.Find("Sprites/Default");
 
             return shaderSprite;
         }
@@ -53,7 +53,7 @@ public class MeshUtil
     public static MeshRenderer ApplyMaterial(GameObject plane, Color color)
     {
         MeshRenderer renderer = plane.AddComponent<MeshRenderer>();
-        renderer.material.shader = Shader.Find("Sprites/Diffuse");
+        renderer.material.shader = ShaderSprite;
         renderer.material.color = color;
         return renderer;
     }

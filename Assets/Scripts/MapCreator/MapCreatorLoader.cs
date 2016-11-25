@@ -78,7 +78,7 @@ public class MapCreatorLoader : MonoBehaviour
         ground = MeshUtil.MakeSolidMesh("Ground", sizeX, sizeY, color);
         ground.transform.SetParent(baseMapObject.transform, false);
         MeshRenderer render = ground.GetComponent<MeshRenderer>();
-        render.sortingOrder = 0;
+        render.sortingOrder = SortingOrder.Is(Layer.Ground);
 
         groundPlane = new Plane(Vector3.up, Vector3.zero);
     }

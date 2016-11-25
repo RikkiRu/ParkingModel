@@ -42,7 +42,7 @@ public class ParkingZone : MonoBehaviour
         filter.mesh = mesh;
 
         var meshRender = MeshUtil.ApplyMaterial(gameObject, new Color32(165, 165, 165, 255));
-        meshRender.sortingOrder = 10;
+        meshRender.sortingOrder = SortingOrder.Is(Layer.Polygon);
 
         spheres = new List<GameObject>();
         GameObject sphereHolderObj = new GameObject("SphereHolder");
@@ -224,7 +224,7 @@ public class ParkingZone : MonoBehaviour
         PathNode node = Instantiate(pathNodePrefab);
         node.transform.SetParent(nodeHolder, false);
         Vector3 p3d = MapCreatorLoader.Pointer3d;
-        node.transform.localPosition = p3d;
+        node.SetPosition(p3d);
         nodes.Add(node);
     }
 
