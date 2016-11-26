@@ -15,6 +15,11 @@ public class PathNode : MonoBehaviour
     private GameObject PlatformObject { get; set; }
     private Transform ObjectsHolder { get; set; }
 
+    public Vector2 XZ
+    {
+        get { return new Vector2(transform.position.x, transform.position.z); }
+    }
+
     private void Awake()
     {
         OutNodes = new List<PathNode>();
@@ -67,24 +72,19 @@ public class PathNode : MonoBehaviour
     {
         CleanObjects();
 
- 
-
         foreach (var i in OutNodes)
         {
-            Vector2 p1 = new Vector2(transform.position.x, transform.position.z);
-            Vector2 p2 = new Vector2(i.transform.position.x, i.transform.position.z);
+            Vector2 p1 = XZ;
+            Vector2 p2 = i.XZ;
 
             GeometryUtil.LineOptions lineOpt = new GeometryUtil.LineOptions(p1, p2);
 
-            float dNormScale = NormScale / Mathf.Sqrt(Mathf.Pow(lineOpt.NormX, 2) + Mathf.Pow(lineOpt.NormY, 2));
+            lineOpt.CalcNormScale(NormScale);
 
-            Vector2 s1 = p1;
-            Vector2 s2 = p2;
-
-            Vector2 q1 = new Vector2(s1.x - lineOpt.NormX * dNormScale, s1.y - lineOpt.NormY * dNormScale);
-            Vector2 q2 = new Vector2(s1.x + lineOpt.NormX * dNormScale, s1.y + lineOpt.NormY * dNormScale);
-            Vector2 q3 = new Vector2(s2.x - lineOpt.NormX * dNormScale, s2.y - lineOpt.NormY * dNormScale);
-            Vector2 q4 = new Vector2(s2.x + lineOpt.NormX * dNormScale, s2.y + lineOpt.NormY * dNormScale);
+            Vector2 q1 = lineOpt.MakeNormalOffset(p1, -1);
+            Vector2 q2 = lineOpt.MakeNormalOffset(p1, +1);
+            Vector2 q3 = lineOpt.MakeNormalOffset(p2, -1);
+            Vector2 q4 = lineOpt.MakeNormalOffset(p2, +1);
 
             CorrectWithMagnetPoints(ref q1, ref q2);
             i.CorrectWithMagnetPoints(ref q3, ref q4);
@@ -172,6 +172,46 @@ public class PathNode : MonoBehaviour
             MagnetPoints.Add(i);
 
         ReDraw();
+    }
+
+    public void MakePlaces()
+    {
+        foreach (var node in OutNodes)
+            MakePlacesOnWayTo(node);
+    }
+
+    private void MakePlacesOnWayTo(PathNode node)
+    {
+        Vector2 p1 = XZ;
+        Vector2 p2 = node.XZ;
+
+        GeometryUtil.LineOptions line = new GeometryUtil.LineOptions(p1, p2);
+        line.CalcDirScale(1);
+        line.CalcNormScale(ParkingPlace.NormSize / 2);
+
+        float dist = Vector2.Distance(p1, p2);
+
+        int count = Mathf.FloorToInt(dist / (ParkingPlace.DirSize + ParkingPlace.SplitDist));
+
+        for (int i = 0; i < count; i++)
+        {
+            float dirOffset = i * (ParkingPlace.DirSize + ParkingPlace.SplitDist) + ParkingPlace.DirSize / 2;
+            Vector2 np = line.GetDirOffset(p1, dirOffset, 1);
+
+            Vector2 q1 = line.MakeNormalOffset(np, -1);
+            Vector2 q2 = line.MakeNormalOffset(np, +1);
+
+            // Checking for can place
+
+            MakePlaceAt(q1);
+            MakePlaceAt(q2);
+        }
+    }
+
+    private void MakePlaceAt(Vector2 p)
+    {
+        GameObject g = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        g.transform.position = new Vector3(p.x, 0, p.y);
     }
 
     private class MagnetInfo

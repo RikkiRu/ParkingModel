@@ -112,9 +112,13 @@ public class GeometryUtil
 
         public float NormX { get; set; }
         public float NormY { get; set; }
+        public float D_NormX { get; set; }
+        public float D_NormY { get; set; }
 
-        public float AbsDirX { get; set; } // -B
-        public float AbsDirY { get; set; } // +A
+        public float DirX { get; set; } // -B
+        public float DirY { get; set; } // +A
+        public float D_DirX { get; set; }
+        public float D_DirY { get; set; }
 
         public LineOptions(Vector2 p1, Vector2 p2)
         {
@@ -126,7 +130,7 @@ public class GeometryUtil
             C = p1.y * dx - p1.x * dy;
 
             if (A == 0 && B == 0)
-                throw new Exception("Look like line is not line - it's point");
+                throw new Exception("Look like line is not line - it's point!");
 
             float normX = A;
             float normY = B;
@@ -134,11 +138,42 @@ public class GeometryUtil
             NormX = normX;
             NormY = normY;
 
-            float absDirX = -B;
-            float absDirY = +A;
-            Normilize(ref absDirX, ref absDirY);
-            AbsDirX = Mathf.Abs(absDirX);
-            AbsDirY = Mathf.Abs(absDirY);
+            float dirX = -B;
+            float dirY = +A;
+            Normilize(ref dirX, ref dirY);
+            DirX = dirX;
+            DirY = dirY;
+        }
+
+        public void CalcNormScale(float scale)
+        {
+            // Вектор пронормирован. Получается что при диагональном смещении 
+            // мы смещаем большее смещение чем нужно, поэтому надо уменьшить
+            // норму в соответствии с её реальным размером
+
+            float dNormScale = scale / Mathf.Sqrt(Mathf.Pow(NormX, 2) + Mathf.Pow(NormY, 2));
+            D_NormX = NormX * dNormScale;
+            D_NormY = NormY * dNormScale;
+        }
+
+        public void CalcDirScale(float scale)
+        {
+            float dDirScale = scale / Mathf.Sqrt(Mathf.Pow(DirX, 2) + Mathf.Pow(DirY, 2));
+            D_DirX = DirX * dDirScale;
+            D_DirY = DirY * dDirScale;
+        }
+
+        public Vector2 GetDirOffset(Vector2 from, float dist, float direction)
+        {
+            float delta = dist * direction;
+            float nx = from.x + D_DirX * delta;
+            float ny = from.y + D_DirY * delta;
+            return new Vector2(nx, ny);
+        }
+
+        public Vector2 MakeNormalOffset(Vector2 point, float direction)
+        {
+            return new Vector2(point.x + direction * D_NormX, point.y + direction * D_NormY);
         }
 
         private void Normilize(ref float x, ref float y)

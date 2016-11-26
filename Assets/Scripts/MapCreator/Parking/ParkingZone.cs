@@ -16,6 +16,8 @@ public class ParkingZone : MonoBehaviour
     private List<Vector2> vertices2D;
     private List<GameObject> spheres;
     private List<PathNode> nodes;
+    private List<ParkingPlace> places;
+
     private PathNode connectNode1;
     private bool connectNodesModeOn;
 
@@ -53,6 +55,8 @@ public class ParkingZone : MonoBehaviour
         GameObject nodeHolderObj = new GameObject("NodeHolder");
         nodeHolderObj.transform.SetParent(transform, false);
         nodeHolder = nodeHolderObj.transform;
+
+        places = new List<ParkingPlace>();
     }
 
     private void OnEnable()
@@ -244,5 +248,19 @@ public class ParkingZone : MonoBehaviour
 
         Destroy(removingNode.gameObject);
         nodes.Remove(removingNode);
+    }
+
+    public void MakePlaces()
+    {
+        foreach (var i in places)
+            Destroy(i.gameObject);
+
+        foreach (var i in nodes)
+            i.MakePlaces();
+    }
+
+    public bool IsCanPutPlaceIn(Vector2 position)
+    {
+        return true;
     }
 }

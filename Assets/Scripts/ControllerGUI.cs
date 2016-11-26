@@ -1,30 +1,35 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class ControllerGUI : MonoBehaviour
 {
-    [SerializeField] Button quadZone;
     [SerializeField] Button pointAdd;
     [SerializeField] Button pointRemove;
     [SerializeField] Button pointEdit;
     [SerializeField] Button makeNode;
     [SerializeField] Button makeConnectedNode;
     [SerializeField] Button removeNode;
+    [SerializeField] Button makePlaces;
+
     [SerializeField] Text pointEditText;
-    [SerializeField] QuadZone quadZonePrefab;
 
     private bool pointEditEnabled;
 
     private void Awake()
     {
-        quadZone.onClick.AddListener(OnQuadZoneClick);
         pointAdd.onClick.AddListener(OnPointAddClick);
         pointRemove.onClick.AddListener(OnPointRemoveClick);
         pointEdit.onClick.AddListener(OnPointEditClick);
         makeNode.onClick.AddListener(OnMakeNodeClick);
         makeConnectedNode.onClick.AddListener(OnMakeConnectedNode);
         removeNode.onClick.AddListener(OnRemoveNodeClick);
+        makePlaces.onClick.AddListener(OnMakePlacesClick);
+    }
+
+    private void OnMakePlacesClick()
+    {
+        CommonClick();
+        MapCreatorLoader.Instance.ParkingZone.MakePlaces();
     }
 
     private void OnMakeConnectedNode()
@@ -60,9 +65,9 @@ public class ControllerGUI : MonoBehaviour
     private void CheckPointEdit()
     {
         if (pointEditEnabled)
-            pointEditText.text = "Edit enabled";
+            pointEditText.text = "Edit V ON";
         else
-            pointEditText.text = "Edit disabled";
+            pointEditText.text = "Edit V OFF";
 
         MapCreatorLoader.Instance.ParkingZone.ToggleEdit(pointEditEnabled);
     }
@@ -83,16 +88,5 @@ public class ControllerGUI : MonoBehaviour
     {
         pointEditEnabled = false;
         CheckPointEdit();
-    }
-
-    private void OnQuadZoneClick()
-    {
-        CommonClick();
-
-        QuadZone zone = Instantiate(quadZonePrefab);
-        MapCreatorLoader.Instance.Attach(zone.gameObject);
-        zone.transform.localPosition = 
-            MapCreatorLoader.Instance.CameraInstance.Poiner.transform.localPosition + 
-            new Vector3(0, 0.2f, 0);
     }
 }
