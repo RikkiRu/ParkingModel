@@ -250,17 +250,19 @@ public class ParkingZone : MonoBehaviour
         nodes.Remove(removingNode);
     }
 
+    public void AddParkingPlace(ParkingPlace x)
+    {
+        places.Add(x);
+    }
+
     public void MakePlaces()
     {
         foreach (var i in places)
             Destroy(i.gameObject);
 
+        places.Clear();
+
         foreach (var i in nodes)
             i.MakePlaces();
-    }
-
-    public bool IsCanPutPlaceIn(Vector2 position)
-    {
-        return true;
     }
 }

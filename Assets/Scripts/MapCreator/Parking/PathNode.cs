@@ -8,6 +8,7 @@ public class PathNode : MonoBehaviour
     private const float NodeBaseScale = 2f;     // Скейл платформы
 
     [SerializeField] QuadZone quadZonePrefab;
+    [SerializeField] ParkingPlace parkingPlacePrefab;
 
     public List<PathNode> OutNodes { get; set; }
     public List<Vector2> MagnetPoints { get; set; }
@@ -188,6 +189,7 @@ public class PathNode : MonoBehaviour
         GeometryUtil.LineOptions line = new GeometryUtil.LineOptions(p1, p2);
         line.CalcDirScale(1);
         line.CalcNormScale(ParkingPlace.NormSize / 2);
+        Vector2 normal = new Vector2(line.D_NormX, line.D_NormY);
 
         float dist = Vector2.Distance(p1, p2);
 
@@ -201,17 +203,28 @@ public class PathNode : MonoBehaviour
             Vector2 q1 = line.MakeNormalOffset(np, -1);
             Vector2 q2 = line.MakeNormalOffset(np, +1);
 
-            // Checking for can place
-
-            MakePlaceAt(q1);
-            MakePlaceAt(q2);
+            if (CanPlaceAt(q1))
+                MakePlaceAt(q1, -normal);
+            
+            if (CanPlaceAt(q2))
+                MakePlaceAt(q2, normal);
         }
     }
 
-    private void MakePlaceAt(Vector2 p)
+    private bool CanPlaceAt(Vector2 position)
     {
-        GameObject g = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        g.transform.position = new Vector3(p.x, 0, p.y);
+        //pss
+        return true;
+    }
+
+    private void MakePlaceAt(Vector2 p, Vector2 direction)
+    {
+        ParkingPlace place = Instantiate(parkingPlacePrefab);
+        MapCreatorLoader.Instance.Attach(place.gameObject);
+        place.transform.position = new Vector3(p.x, 0, p.y);
+        place.SpawnShape(direction);
+
+        MapCreatorLoader.Instance.ParkingZone.AddParkingPlace(place);
     }
 
     private class MagnetInfo
