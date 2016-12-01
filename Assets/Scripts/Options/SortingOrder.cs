@@ -3,6 +3,7 @@
     None = 0,
     Ground,
     Polygon,
+    WrongPlace,
     Place,
     NodeBase,
     Road,

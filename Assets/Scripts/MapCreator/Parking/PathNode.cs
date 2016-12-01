@@ -13,8 +13,12 @@ public class PathNode : MonoBehaviour
     public List<PathNode> OutNodes { get; set; }
     public List<Vector2> MagnetPoints { get; set; }
     private List<GameObject> Objects { get; set; }
+    private List<GameObject> Places { get; set; }
+    private List<int> ObjectShapes { get; set; }
+
     private GameObject PlatformObject { get; set; }
     private Transform ObjectsHolder { get; set; }
+    private int SelfShape { get; set; }
 
     public Vector2 XZ
     {
@@ -25,6 +29,8 @@ public class PathNode : MonoBehaviour
     {
         OutNodes = new List<PathNode>();
         Objects = new List<GameObject>();
+        Places = new List<GameObject>();
+        ObjectShapes = new List<int>();
         MagnetPoints = null;
 
         GameObject lineHolderObj = new GameObject("NodeChilds");
@@ -55,7 +61,15 @@ public class PathNode : MonoBehaviour
         foreach (var i in Objects)
             Destroy(i);
 
+        foreach (var i in ObjectShapes)
+            MapCreatorLoader.Instance.ParkingZone.RemoveShape(i);
+
+        foreach (var i in Places)
+            Destroy(i);
+
         Objects.Clear();
+        ObjectShapes.Clear();
+        Places.Clear();
     }
 
     private void OnDestroy()
@@ -67,6 +81,8 @@ public class PathNode : MonoBehaviour
         }
 
         CleanObjects();
+
+        MapCreatorLoader.Instance.ParkingZone.RemoveShape(SelfShape);
     }
 
     private void ReDraw()
@@ -97,6 +113,12 @@ public class PathNode : MonoBehaviour
             var quadRender = quad.gameObject.GetComponent<MeshRenderer>();
             quadRender.sortingOrder = SortingOrder.Is(Layer.Road);
             Objects.Add(quad.gameObject);
+            List<Vector2> quadV = new List<Vector2>();
+            quadV.Add(q1);
+            quadV.Add(q2);
+            quadV.Add(q3);
+            quadV.Add(q4);
+            ObjectShapes.Add(MapCreatorLoader.Instance.ParkingZone.AddShape(quadV, false));
 
             var line = MakeLine(GeometryUtil.V3(p1), GeometryUtil.V3(p2), Colors.NodeLineColor);
             var lineRender = line.GetComponent<LineRenderer>();
@@ -172,11 +194,21 @@ public class PathNode : MonoBehaviour
         foreach (var i in shape)
             MagnetPoints.Add(i);
 
+        SelfShape = MapCreatorLoader.Instance.ParkingZone.AddShape(shape, false);
+
         ReDraw();
     }
 
     public void MakePlaces()
     {
+        foreach (var i in Places)
+        {
+            i.GetComponent<ParkingPlace>().RemoveShapeNow();
+            Destroy(i);
+        }
+
+        Places.Clear();
+
         foreach (var node in OutNodes)
             MakePlacesOnWayTo(node);
     }
@@ -203,28 +235,34 @@ public class PathNode : MonoBehaviour
             Vector2 q1 = line.MakeNormalOffset(np, -1);
             Vector2 q2 = line.MakeNormalOffset(np, +1);
 
-            if (CanPlaceAt(q1))
-                MakePlaceAt(q1, -normal);
-            
-            if (CanPlaceAt(q2))
-                MakePlaceAt(q2, normal);
+            MakePlaceAt(q1, -normal);
+            MakePlaceAt(q2, normal);
         }
     }
 
     private bool CanPlaceAt(Vector2 position)
     {
-        //pss
-        return true;
+        return MapCreatorLoader.Instance.ParkingZone.CanPlaceTo(position);
     }
 
     private void MakePlaceAt(Vector2 p, Vector2 direction)
     {
+        var v = ParkingPlace.GetVertices(p, direction);
+
+        bool can = true;
+
+        foreach (var vert in v)
+        {
+            if (!CanPlaceAt(vert))
+                //return;
+                can = false;
+        }
+
         ParkingPlace place = Instantiate(parkingPlacePrefab);
         MapCreatorLoader.Instance.Attach(place.gameObject);
         place.transform.position = new Vector3(p.x, 0, p.y);
-        place.SpawnShape(direction);
-
-        MapCreatorLoader.Instance.ParkingZone.AddParkingPlace(place);
+        place.SpawnShape(v, can);
+        Places.Add(place.gameObject);
     }
 
     private class MagnetInfo

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 public class ParkingZone : MonoBehaviour
 {
@@ -16,10 +17,11 @@ public class ParkingZone : MonoBehaviour
     private List<Vector2> vertices2D;
     private List<GameObject> spheres;
     private List<PathNode> nodes;
-    private List<ParkingPlace> places;
+    private List<ShapeInfo> shapeInfos;
 
     private PathNode connectNode1;
     private bool connectNodesModeOn;
+    private int selfShapeId = -1;
 
     private void Awake()
     {
@@ -37,7 +39,7 @@ public class ParkingZone : MonoBehaviour
         vertices2D.Add(new Vector2(50, 25));
         vertices2D.Add(new Vector2(75, 25));
         vertices2D.Add(new Vector2(75, 0));
-
+        
         mesh = new Mesh();
         mesh.name = "parkingZoneMesh";
         filter = gameObject.AddComponent<MeshFilter>();
@@ -56,7 +58,8 @@ public class ParkingZone : MonoBehaviour
         nodeHolderObj.transform.SetParent(transform, false);
         nodeHolder = nodeHolderObj.transform;
 
-        places = new List<ParkingPlace>();
+        shapeInfos = new List<ShapeInfo>();
+        UpdateSelfShape();
     }
 
     private void OnEnable()
@@ -67,6 +70,43 @@ public class ParkingZone : MonoBehaviour
     private void OnDisable()
     {
         MapCreatorLoader.Instance.CameraInstance.PointerPositionChanged -= PointerPositionChanged;
+    }
+
+    private void OnDestroy()
+    {
+        RemoveShape(selfShapeId);
+    }
+
+    public int AddShape(List<Vector2> positions, bool placesInside)
+    {
+        ShapeInfo info = new ShapeInfo(positions, placesInside);
+        shapeInfos.Add(info);
+        return info.ID;
+    }
+
+    public void RemoveShape(int id)
+    {
+        if (id <= 0)
+            return;
+
+        shapeInfos.RemoveAll(c => c.ID == id);
+    }
+
+    public bool CanPlaceTo(Vector2 position)
+    {
+        foreach(var i in shapeInfos)
+        {
+            if (!i.CanPlaceTo(position))
+                return false;
+        }
+
+        return true;
+    }
+
+    private void UpdateSelfShape()
+    {
+        RemoveShape(selfShapeId);
+        selfShapeId = AddShape(vertices2D, true);
     }
 
     private void PointerPositionChanged()
@@ -107,10 +147,9 @@ public class ParkingZone : MonoBehaviour
             }
 
             vertices2D[editVertexIndx] = pos2d;
+            UpdateSelfShape();
             ReDraw();
         }
-
-        //bool inPoly = GeometryUtil.Pnpoly(vertices2D.ToArray(), pos2d);
     }
 
     private void ExitNodeConnectionMode()
@@ -174,6 +213,7 @@ public class ParkingZone : MonoBehaviour
         if (insertPoint >= vertices2D.Count)
             insertPoint = 0;
 
+        UpdateSelfShape();
         vertices2D.Insert(insertPoint, p2d);
         ReDraw();
     }
@@ -187,6 +227,7 @@ public class ParkingZone : MonoBehaviour
         }
 
         int indxMinDist = GeometryUtil.FindClosest(vertices2D, MapCreatorLoader.Pointer2d);
+        UpdateSelfShape();
         vertices2D.RemoveAt(indxMinDist);
         ReDraw();
     }
@@ -250,19 +291,36 @@ public class ParkingZone : MonoBehaviour
         nodes.Remove(removingNode);
     }
 
-    public void AddParkingPlace(ParkingPlace x)
-    {
-        places.Add(x);
-    }
-
     public void MakePlaces()
     {
-        foreach (var i in places)
-            Destroy(i.gameObject);
-
-        places.Clear();
-
         foreach (var i in nodes)
             i.MakePlaces();
+    }
+
+    private class ShapeInfo
+    {
+        private static int counter = 0;
+
+        public ShapeInfo(List<Vector2> v, bool placesInside)
+        {
+            V = new List<Vector2>();
+            foreach (var i in v)
+                V.Add(i);
+
+            counter++;
+            ID = counter;
+
+            PlacesInside = placesInside;
+        }
+
+        public List<Vector2> V { get; private set; }
+        public int ID { get; private set; }
+        public bool PlacesInside { get; private set; }
+
+        public bool CanPlaceTo(Vector2 position)
+        {
+            bool inPoly = GeometryUtil.Pnpoly(V.ToArray(), position);
+            return inPoly == PlacesInside;
+        }
     }
 }
