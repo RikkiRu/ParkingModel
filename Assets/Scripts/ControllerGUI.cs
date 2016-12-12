@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class ControllerGUI : MonoBehaviour
@@ -10,6 +11,8 @@ public class ControllerGUI : MonoBehaviour
     [SerializeField] Button makeConnectedNode;
     [SerializeField] Button removeNode;
     [SerializeField] Button makePlaces;
+    [SerializeField] Button geneticStart;
+    [SerializeField] Button geneticStop;
 
     [SerializeField] Text pointEditText;
 
@@ -24,6 +27,18 @@ public class ControllerGUI : MonoBehaviour
         makeConnectedNode.onClick.AddListener(OnMakeConnectedNode);
         removeNode.onClick.AddListener(OnRemoveNodeClick);
         makePlaces.onClick.AddListener(OnMakePlacesClick);
+        geneticStart.onClick.AddListener(OnGeneticStart);
+        geneticStop.onClick.AddListener(OnGeneticStop);
+    }
+
+    private void OnGeneticStop()
+    {
+        MapCreatorLoader.Instance.GeneticController.SetActive(false);
+    }
+
+    private void OnGeneticStart()
+    {
+        MapCreatorLoader.Instance.GeneticController.SetActive(true);
     }
 
     private void OnMakePlacesClick()

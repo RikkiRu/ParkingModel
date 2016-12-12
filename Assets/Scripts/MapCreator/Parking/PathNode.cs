@@ -20,6 +20,8 @@ public class PathNode : MonoBehaviour
     private Transform ObjectsHolder { get; set; }
     private int SelfShape { get; set; }
 
+    public bool UserNode { get; set; }
+
     public Vector2 XZ
     {
         get { return new Vector2(transform.position.x, transform.position.z); }
@@ -65,7 +67,10 @@ public class PathNode : MonoBehaviour
             MapCreatorLoader.Instance.ParkingZone.RemoveShape(i);
 
         foreach (var i in Places)
+        {
+            i.GetComponent<ParkingPlace>().RemoveShapeNow();
             Destroy(i);
+        }
 
         Objects.Clear();
         ObjectShapes.Clear();
@@ -254,8 +259,8 @@ public class PathNode : MonoBehaviour
         foreach (var vert in v)
         {
             if (!CanPlaceAt(vert))
-                //return;
-                can = false;
+                return;
+                //can = false;
         }
 
         ParkingPlace place = Instantiate(parkingPlacePrefab);

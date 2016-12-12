@@ -1,7 +1,6 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System;
+using UnityEngine;
 
 public class ParkingZone : MonoBehaviour
 {
@@ -107,6 +106,11 @@ public class ParkingZone : MonoBehaviour
     {
         RemoveShape(selfShapeId);
         selfShapeId = AddShape(vertices2D, true);
+    }
+
+    public ShapeInfo GetZoneShape()
+    {
+        return shapeInfos.Where(c => c.ID == selfShapeId).FirstOrDefault();
     }
 
     private void PointerPositionChanged()
@@ -264,13 +268,27 @@ public class ParkingZone : MonoBehaviour
         connectNodesModeOn = true;
     }
 
-    public void AddNode()
+    public PathNode AddProgramNode(Vector3 position, bool user)
     {
         PathNode node = Instantiate(pathNodePrefab);
         node.transform.SetParent(nodeHolder, false);
-        Vector3 p3d = MapCreatorLoader.Pointer3d;
+        Vector3 p3d = position;
         node.SetPosition(p3d);
+        node.UserNode = user;
         nodes.Add(node);
+        return node;
+    }
+
+    public void AddNode()
+    {
+        AddProgramNode(MapCreatorLoader.Pointer3d, true);
+    }
+
+    public void RemoveNonUserNodes()
+    {
+        var nonUserNodes = nodes.Where(c => c.UserNode == false).ToList();
+        foreach (var i in nonUserNodes)
+            RemoveNode(i);
     }
 
     public void RemoveNode()
@@ -283,7 +301,11 @@ public class ParkingZone : MonoBehaviour
             return;
 
         PathNode removingNode = nodes[id];
+        RemoveNode(removingNode);
+    }
 
+    private void RemoveNode(PathNode removingNode)
+    {
         foreach (var i in nodes)
             i.CheckNodeForRemove(removingNode);
 
@@ -297,7 +319,7 @@ public class ParkingZone : MonoBehaviour
             i.MakePlaces();
     }
 
-    private class ShapeInfo
+    public class ShapeInfo
     {
         private static int counter = 0;
 

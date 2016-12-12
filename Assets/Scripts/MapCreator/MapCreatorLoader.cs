@@ -27,6 +27,7 @@ public class MapCreatorLoader : MonoBehaviour
     [SerializeField] GameObject baseMapObjectPrefab;
     [SerializeField] ControllerGUI guiControllerPrefab;
     [SerializeField] ParkingZone parkingZonePrefab;
+    [SerializeField] GeneticController geneticControllerPrefab;
 
     private const float sizeX = 10000;
     private const float sizeY = sizeX;
@@ -38,12 +39,14 @@ public class MapCreatorLoader : MonoBehaviour
     private Plane groundPlane;
     private ControllerGUI guiController;
     private ParkingZone parkingZone;
+    private GeneticController geneticController;
 
     public CameraController CameraInstance { get { return cameraInstance; } }
     public GameObject BaseMapObject { get { return baseMapObject; } }
     public GameObject Ground { get { return ground; } }
     public Plane GroundPlane { get { return groundPlane; } }
     public ParkingZone ParkingZone { get { return parkingZone; } }
+    public GeneticController GeneticController { get { return geneticController; } }
 
     public void Init()
     {
@@ -54,6 +57,13 @@ public class MapCreatorLoader : MonoBehaviour
         MakeCamera();
         MakeGui();
         MakeParkingZone();
+        MakeGenetic();
+    }
+
+    private void MakeGenetic()
+    {
+        geneticController = Instantiate(geneticControllerPrefab);
+        Attach(geneticController.gameObject);
     }
 
     private void MakeParkingZone()
