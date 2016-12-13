@@ -12,6 +12,9 @@ public class GeneticController : MonoBehaviour
     public Vector2 BoundsMax { get; set; }
     private List<GeneticEssence> Essences { get; set; }
 
+    private int BestCount = -1;
+    private GeneticEssence BestEssence = null;
+
     private ParkingZone Zone
     {
         get { return MapCreatorLoader.Instance.ParkingZone; }
@@ -53,6 +56,11 @@ public class GeneticController : MonoBehaviour
             StopCoroutine(GeneticCoroutine);
             GeneticCoroutine = null;
             Clear();
+
+            if (BestEssence != null)
+            {
+                SpawnFunction(BestEssence);
+            }
         }
     }
 
@@ -78,14 +86,66 @@ public class GeneticController : MonoBehaviour
     {
         CalcBounds();
 
+        var userNodes = Zone.GetUserNodes();
+
         while (true)
         {
+            Essences.Clear();
+            const int StartSetCount = 1;
+            for (int i = 0; i < StartSetCount; i++)
+            {
+                Essences.Add(new GeneticEssence(userNodes));
+            }
+
+            foreach (var i in Essences)
+            {
+                Clear();
+                SpawnFunction(i);
+                Zone.MakePlaces();
+                int places = Zone.GetPlacesCount();
+                //Debug.Log("Places: " + places);
+
+                if (places > BestCount)
+                {
+                    BestCount = places;
+                    BestEssence = i;
+                    Debug.Log("Best: " + BestCount);
+                }
+            }
+
             yield return null;
+            yield return new WaitForSeconds(0.1f);
         }
     }
 
-    private int FitnessFunction(GeneticEssence essence)
+    private class InfObj
     {
-        return 0;
+        public GeneticEssence.NodeInf Info { get; set; }
+        public PathNode Obj { get; set; }
+    }
+
+    private void SpawnFunction(GeneticEssence essence)
+    {
+        Dictionary<int, InfObj> keys = new Dictionary<int, InfObj>();
+
+        foreach (var i in essence.Nodes)
+        {
+            var node = MakeNode(i.Position);
+            InfObj inf = new InfObj();
+            inf.Info = i;
+            inf.Obj = node;
+            keys.Add(i.ID, inf);
+        }
+
+        foreach (var i in essence.Nodes)
+        {
+            var from = keys[i.ID];
+
+            foreach (var id in i.OutConnections)
+            {
+                var to = keys[id];
+                from.Obj.AddNode(to.Obj);
+            }
+        }
     }
 }

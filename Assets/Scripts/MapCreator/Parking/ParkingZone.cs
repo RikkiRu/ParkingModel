@@ -12,6 +12,7 @@ public class ParkingZone : MonoBehaviour
     private int editVertexIndx;
     private Transform sphereHolder;
     private Transform nodeHolder;
+    private int placesCount = 0;
 
     private List<Vector2> vertices2D;
     private List<GameObject> spheres;
@@ -284,6 +285,11 @@ public class ParkingZone : MonoBehaviour
         AddProgramNode(MapCreatorLoader.Pointer3d, true);
     }
 
+    public List<PathNode> GetUserNodes()
+    {
+        return nodes.Where(c => c.UserNode == true).ToList();
+    }
+
     public void RemoveNonUserNodes()
     {
         var nonUserNodes = nodes.Where(c => c.UserNode == false).ToList();
@@ -315,8 +321,17 @@ public class ParkingZone : MonoBehaviour
 
     public void MakePlaces()
     {
+        placesCount = 0;
+
         foreach (var i in nodes)
             i.MakePlaces();
+    }
+
+    public int GetPlacesCount() { return placesCount; }
+
+    public void PlaceAdded()
+    {
+        placesCount++;
     }
 
     public class ShapeInfo

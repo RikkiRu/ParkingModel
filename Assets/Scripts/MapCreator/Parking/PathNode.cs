@@ -55,6 +55,9 @@ public class PathNode : MonoBehaviour
         if (OutNodes.Contains(node))
             return;
 
+        if (node.OutNodes.Contains(this))
+            return;
+
         OutNodes.Add(node);
         ReDraw();
     }
@@ -272,6 +275,8 @@ public class PathNode : MonoBehaviour
         place.transform.position = new Vector3(p.x, 0, p.y);
         place.SpawnShape(v, can);
         Places.Add(place.gameObject);
+
+        MapCreatorLoader.Instance.ParkingZone.PlaceAdded();
     }
 
     private class MagnetInfo
