@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Collections;
 
 public class PathNode : MonoBehaviour
 {
@@ -105,8 +106,8 @@ public class PathNode : MonoBehaviour
 
             Vector2 q1 = lineOpt.MakeNormalOffset(p1, -1);
             Vector2 q2 = lineOpt.MakeNormalOffset(p1, +1);
-            Vector2 q3 = lineOpt.MakeNormalOffset(p2, -1);
-            Vector2 q4 = lineOpt.MakeNormalOffset(p2, +1);
+            Vector2 q4 = lineOpt.MakeNormalOffset(p2, -1);
+            Vector2 q3 = lineOpt.MakeNormalOffset(p2, +1);
 
             CorrectWithMagnetPoints(ref q1, ref q2);
             i.CorrectWithMagnetPoints(ref q3, ref q4);
@@ -114,7 +115,7 @@ public class PathNode : MonoBehaviour
             var quad = Instantiate(quadZonePrefab);
             MapCreatorLoader.Instance.Attach(quad.gameObject);
             quad.Color = Colors.RoadColor;
-            quad.Init(q1, q2, q3, q4);
+            quad.Init(q1, q2, q4, q3);
             var quadRender = quad.gameObject.GetComponent<MeshRenderer>();
             quadRender.sortingOrder = SortingOrder.Is(Layer.Road);
             Objects.Add(quad.gameObject);
@@ -125,10 +126,7 @@ public class PathNode : MonoBehaviour
             quadV.Add(q4);
             ObjectShapes.Add(MapCreatorLoader.Instance.ParkingZone.AddShape(quadV, false));
 
-            var line = MakeLine(GeometryUtil.V3(p1), GeometryUtil.V3(p2), Colors.NodeLineColor);
-            var lineRender = line.GetComponent<LineRenderer>();
-            lineRender.sortingOrder = SortingOrder.Is(Layer.NodeLine);
-            Objects.Add(line);
+            MakeLine(p1, p2, Colors.NodeLineColor);
         }
     }
 
@@ -167,8 +165,11 @@ public class PathNode : MonoBehaviour
         ProcessMagnetPointsInfo(info2, ref distation2);
     }
 
-    private GameObject MakeLine(Vector3 start, Vector3 end, Color color)
+    private GameObject MakeLine(Vector2 p1, Vector2 p2, Color color)
     {
+        Vector3 start = GeometryUtil.V3(p1);
+        Vector3 end = GeometryUtil.V3(p2);
+
         GameObject myLine = new GameObject("line");
         myLine.transform.SetParent(ObjectsHolder, false);
         myLine.transform.position = start;
@@ -178,6 +179,10 @@ public class PathNode : MonoBehaviour
         lr.SetWidth(0.2f, 0.2f);
         lr.SetPosition(0, start);
         lr.SetPosition(1, end);
+
+        lr.sortingOrder = SortingOrder.Is(Layer.NodeLine);
+        Objects.Add(myLine);
+
         return myLine;
     }
 
@@ -260,7 +265,6 @@ public class PathNode : MonoBehaviour
         {
             if (!CanPlaceAt(vert))
                 return;
-                //can = false;
         }
 
         ParkingPlace place = Instantiate(parkingPlacePrefab);

@@ -93,7 +93,7 @@ public class ParkingZone : MonoBehaviour
 
     public bool CanPlaceTo(Vector2 position)
     {
-        foreach(var i in shapeInfos)
+        foreach (var i in shapeInfos)
         {
             if (!i.CanPlaceTo(position))
                 return false;
@@ -325,9 +325,9 @@ public class ParkingZone : MonoBehaviour
 
         public ShapeInfo(List<Vector2> v, bool placesInside)
         {
-            V = new List<Vector2>();
-            foreach (var i in v)
-                V.Add(i);
+            V = new Vector2[v.Count];
+            for (int i = 0; i < v.Count; i++)
+                V[i] = v[i];
 
             counter++;
             ID = counter;
@@ -335,13 +335,13 @@ public class ParkingZone : MonoBehaviour
             PlacesInside = placesInside;
         }
 
-        public List<Vector2> V { get; private set; }
+        public Vector2[] V { get; private set; }
         public int ID { get; private set; }
         public bool PlacesInside { get; private set; }
 
         public bool CanPlaceTo(Vector2 position)
         {
-            bool inPoly = GeometryUtil.Pnpoly(V.ToArray(), position);
+            bool inPoly = GeometryUtil.Pnpoly(V, position);
             return inPoly == PlacesInside;
         }
     }

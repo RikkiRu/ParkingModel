@@ -99,6 +99,11 @@ public class GeometryUtil
         return new Vector2(x, y);
     }
 
+    public static Vector2 V2 (Vector3 v)
+    {
+        return new Vector2(v.x, v.z);
+    }
+
     public static Vector3 V3 (Vector2 v)
     {
         return new Vector3(v.x, 0, v.y);

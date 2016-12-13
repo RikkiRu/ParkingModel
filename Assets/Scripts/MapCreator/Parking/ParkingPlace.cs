@@ -21,8 +21,8 @@ public class ParkingPlace : MonoBehaviour
 
         Vector2 q1 = lineOpt.MakeNormalOffset(origin, -1);
         Vector2 q2 = lineOpt.MakeNormalOffset(origin, +1);
-        Vector2 q3 = lineOpt.MakeNormalOffset(dirOrigin, -1);
-        Vector2 q4 = lineOpt.MakeNormalOffset(dirOrigin, +1);
+        Vector2 q3 = lineOpt.MakeNormalOffset(dirOrigin, +1);
+        Vector2 q4 = lineOpt.MakeNormalOffset(dirOrigin, -1);
 
         List<Vector2> v = new List<Vector2>();
         v.Add(q1);
@@ -43,7 +43,7 @@ public class ParkingPlace : MonoBehaviour
         else
             quad.Color = Colors.CantPlace;
 
-        quad.Init(v[0], v[1], v[2], v[3]);
+        quad.Init(v[0], v[1], v[3], v[2]);
         var quadRender = quad.gameObject.GetComponent<MeshRenderer>();
 
         int sorting = can ? SortingOrder.Is(Layer.Place) : SortingOrder.Is(Layer.WrongPlace);
