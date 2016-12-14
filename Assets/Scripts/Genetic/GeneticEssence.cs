@@ -4,9 +4,21 @@ using UnityEngine;
 
 public class GeneticEssence
 {
-    private const int MaxNodesCount = 20;
-    private const int MinNodesCount = 3;
-    private const int MaxConnections = MaxNodesCount * 2;
+    private static IMutator[] Mutators = null;
+
+    private static IMutator GetMutator()
+    {
+        if (Mutators == null)
+        {
+            Mutators = new IMutator[]
+            {
+                MutatorPositions.Instance,
+                MutatorRemover.Instance,
+            };
+        }
+
+        return Mutators[Random.Range(0, Mutators.Length)];
+    }
 
     public List<NodeInf> Nodes { get; set; }
     public int IdCounter { get; set; }
@@ -29,6 +41,13 @@ public class GeneticEssence
 
         foreach(var i in parent.Nodes)
             Nodes.Add(i.Clone());
+
+        Mutate();
+    }
+
+    private void Mutate()
+    {
+        GetMutator().ApplyTo(this);
     }
 
     private void MakeUserNodes(List<PathNode> userNodes)

@@ -103,7 +103,6 @@ public class GeneticController : MonoBehaviour
                 SpawnFunction(i);
                 Zone.MakePlaces();
                 int places = Zone.GetPlacesCount();
-                //Debug.Log("Places: " + places);
 
                 if (places > BestCount)
                 {
@@ -111,10 +110,10 @@ public class GeneticController : MonoBehaviour
                     BestEssence = i;
                     Debug.Log("Best: " + BestCount);
                 }
-            }
 
-            yield return null;
-            yield return new WaitForSeconds(0.07f);
+                yield return null;
+                yield return new WaitForSeconds(0.07f);
+            }
         }
     }
 
