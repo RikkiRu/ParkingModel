@@ -114,7 +114,7 @@ public class GeneticController : MonoBehaviour
             }
 
             yield return null;
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.07f);
         }
     }
 

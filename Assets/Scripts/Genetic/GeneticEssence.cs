@@ -46,25 +46,54 @@ public class GeneticEssence
         }
     }
 
-    private NodeInf AddNewNode()
+    private NodeInf GenerateNewNode(NodeInf parent, float dist)
     {
         NodeInf inf = new NodeInf();
-        float x = Random.Range(Controller.BoundsMin.x, Controller.BoundsMax.x);
-        float y = Random.Range(Controller.BoundsMin.y, Controller.BoundsMax.y);
 
-        while (!MapCreatorLoader.Instance.ParkingZone.CanPlaceTo(new Vector2(x, y)))
+        float x = 0;
+        float y = 0;
+        int iterations = 0;
+        Vector2 nPos = Vector2.zero;
+        float distToParent = float.MaxValue;
+        int closeNodes = 0;
+        int maxCloseNodes = 1;
+
+        do
         {
-            x = Random.Range(Controller.BoundsMin.x, Controller.BoundsMax.x);
-            y = Random.Range(Controller.BoundsMin.y, Controller.BoundsMax.y);
-        }
+            iterations++;
+            if (iterations > 15)
+                return null;
 
-        inf.Position = new Vector2(x, y);
+            int kX = Random.Range(-1, 2);
+            int kY = Random.Range(-1, 2);
+
+            x = kX * dist;
+            y = kY * dist;
+
+            nPos = parent.Position + new Vector2(x, y);
+
+            closeNodes = 0;
+            foreach (var i in Nodes)
+            {
+                float d = Vector2.Distance(i.Position, nPos);
+                if (d < 1)
+                    closeNodes++;
+
+                if (closeNodes > maxCloseNodes)
+                    break;
+            }
+
+            distToParent = Vector2.Distance(parent.Position, nPos);
+        }
+        while (closeNodes > maxCloseNodes || distToParent < 1 || !MapCreatorLoader.Instance.ParkingZone.CanPlaceTo(nPos));
+
+        inf.Position = nPos;
         inf.ID = IdCounter;
         IdCounter++;
         inf.OutConnections = new List<int>();
         inf.InConnections = new List<int>();
         inf.SourceNode = false;
-        Nodes.Add(inf);
+        
         return inf;
     }
 
@@ -72,22 +101,45 @@ public class GeneticEssence
     {
         var generateNodes = Nodes.Where(c => c.SourceNode == true).ToList();
 
-        const int Steps = 4;
+        int steps = Random.Range(5, 20);
+        float dist = Random.Range(10, 30);
 
-        for (int i = 0; i < Steps; i++)
+        for (int i = 0; i < steps; i++)
         {
             List<NodeInf> newInfos = new List<NodeInf>();
 
             foreach (var node in generateNodes)
             {
-                // Generate only correct angeles
-                var newNode = AddNewNode();
-                newNode.InConnections.Add(node.ID);
-                node.OutConnections.Add(newNode.ID);
-                newInfos.Add(newNode);
+                var newNode1 = GenerateNewNode(node, dist);
+
+                if (newNode1 == null)
+                    continue;
+
+                NodeInf newNode2 = null;
+
+                if (Random.Range(0, 4) == 0)
+                    newNode2 = GenerateNewNode(node, dist);
+
+                if (newNode2 != null && Vector2.Distance(newNode1.Position, newNode2.Position) < 1)
+                    newNode2 = null;
+
+                newNode1.InConnections.Add(node.ID);
+                node.OutConnections.Add(newNode1.ID);
+                Nodes.Add(newNode1);
+                newInfos.Add(newNode1);
+                
+                if (newNode2 != null)
+                {
+                    newNode2.InConnections.Add(node.ID);
+                    node.OutConnections.Add(newNode2.ID);
+                    Nodes.Add(newNode2);
+                    newInfos.Add(newNode2);
+                }
             }
 
             generateNodes = newInfos;
+            if (generateNodes.Count < 1)
+                break;
         }
     }
 
